@@ -8,6 +8,7 @@ use crate::{
         adaptor,
         token::Token,
     },
+    lua_macro,
     pre_processor::PreProcessor,
     translation_unit::TranslationUnit,
 };
@@ -21,17 +22,39 @@ lalrpop_mod!(
 
 type SpannedToken = (usize, Token, usize);
 
-/// Tokenize the source code from a translation unit
+/// Tokenize the source code from a translation unit.
+///
+/// `%lua { ... }` blocks are executed before normal lexing. Their source bytes are
+/// masked in-place (preserving original offsets), while the generated UY-script is
+/// lexed separately and its tokens are mapped back to the macro callsite span.
 fn tokenize(translation_unit: &TranslationUnit) -> (Vec<SpannedToken>, Vec<Diagnostic>) {
+    let source = std::str::from_utf8(&translation_unit.text).unwrap();
+    let prepared = lua_macro::prepare(source);
     let mut tokens = Vec::new();
-    let mut diagnostics = Vec::new();
+    let mut diagnostics = prepared.diagnostics;
 
-    adaptor::Lexer::new(std::str::from_utf8(&translation_unit.text).unwrap()).for_each(|result| {
-        match result {
-            Ok(token) => tokens.push(token),
-            Err(diagnostic) => diagnostics.push(diagnostic),
-        }
+    adaptor::Lexer::new(&prepared.masked_source).for_each(|result| match result {
+        Ok(token) => tokens.push(token),
+        Err(diagnostic) => diagnostics.push(diagnostic),
     });
+
+    for expansion in prepared.expansions {
+        adaptor::Lexer::new(&expansion.source).for_each(|result| match result {
+            Ok((_, token, _)) => tokens.push((
+                expansion.span.start,
+                token,
+                expansion.span.end,
+            )),
+            Err(mut diagnostic) => {
+                diagnostic.span = expansion.span.clone();
+                diagnostics.push(diagnostic);
+            }
+        });
+    }
+
+    // Stable sorting preserves token order within each generated expansion while
+    // placing it exactly where the `%lua` block appeared in the original source.
+    tokens.sort_by_key(|(start, _, _)| *start);
 
     (tokens, diagnostics)
 }
@@ -60,7 +83,7 @@ fn parse_sprite(tokens: Vec<SpannedToken>) -> (Sprite, Vec<Diagnostic>) {
 /// Parse a translation unit into a sprite AST
 ///
 /// This function performs the complete parsing pipeline:
-/// 1. Tokenizes the source code
+/// 1. Executes compile-time Lua macros and tokenizes the resulting source
 /// 2. Applies preprocessing transformations
 /// 3. Parses the tokens into an AST
 ///

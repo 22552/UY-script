@@ -1,7 +1,8 @@
 # Macros
 
-goboscript has a C-like preprocessor. This allows you to define macros and
-include files.
+UY-script inherits goboscript's C-like preprocessor and adds compile-time Lua procedural macros.
+This allows you to define token macros, include files, and generate UY-script source before it is
+parsed and type checked.
 
 !!! note
     The preprocessor directives start with a `%` character. The `%` character must
@@ -105,6 +106,81 @@ all overloads for that name at once.
     code
 %endif
 ```
+
+## Compile-time Lua
+
+UY-script can execute Lua 5.4 while compiling a project. A Lua block starts with `%lua`
+at the beginning of a line and uses braces around the Lua body:
+
+```goboscript
+%lua {
+for i = 1, 3 do
+    uy.emit("var Int generated_" .. i .. " = " .. i .. ";")
+end
+}
+```
+
+`uy.emit(source)` appends generated UY-script source at the position of the macro. The
+example above behaves as if the source contained:
+
+```goboscript
+var Int generated_1 = 1;
+var Int generated_2 = 2;
+var Int generated_3 = 3;
+```
+
+Generated source is lexed and parsed normally, so it also passes UY-script's static type,
+ownership, and borrow checks.
+
+Lua long strings are useful for generating larger blocks of code:
+
+```goboscript
+%lua {
+for i = 1, 4 do
+    uy.emit(string.format([[
+proc generated_%d Int x {
+    say x + %d;
+}
+]], i, i))
+end
+}
+```
+
+This also works well for lookup tables that are expensive or awkward to construct in
+Scratch itself. For example, a small Unicode table can be generated at compile time:
+
+```goboscript
+%lua {
+local values = {}
+for cp = 0x20, 0x7e do
+    values[#values + 1] = utf8.char(cp)
+end
+
+uy.emit("list String ascii;")
+uy.emit("onflag {")
+for _, value in ipairs(values) do
+    -- %q creates a quoted Lua string; for complex escaping prefer a helper generator.
+    uy.emit(string.format("    add %q to ascii;", value))
+end
+uy.emit("}")
+}
+```
+
+### Lua sandbox
+
+Compile-time Lua is intentionally restricted. `os`, `io`, `package`, `debug`, `require`,
+`dofile`, and `loadfile` are unavailable, so a project cannot use a Lua macro to directly
+run host commands or read arbitrary files. Each block is also limited to roughly
+10,000,000 Lua VM instructions and 8 MiB of emitted source.
+
+!!! note
+    Lua macros currently run only in the native UY-script CLI. The current
+    `wasm32-unknown-unknown` compiler build reports an error when `%lua` is used.
+
+!!! note
+    `%include` and `%if` are translation-unit directives and are resolved before Lua
+    code generation. Generate ordinary UY-script code (and token-level macros such as
+    `%define`) with `uy.emit`; do not generate `%include` from Lua.
 
 ## Concatenate Tokens
 

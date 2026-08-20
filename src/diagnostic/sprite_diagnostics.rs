@@ -59,6 +59,36 @@ impl SpriteDiagnostics {
         let mut unit = TranslationUnit::new(fs.clone(), path)?;
         let mut diagnostics = vec![];
         parse_translation_unit(&mut unit, fs, stdlib, &mut diagnostics);
+
+        // `%lua` is handled later, immediately before lexing. The translation-unit
+        // preprocessor does not know this UY-specific directive yet, so it has
+        // temporarily changed its leading `%` to `#` and reported UnknownDirective.
+        // Restore only diagnostics that are exactly for the `lua` directive; real
+        // unknown directives continue to be reported normally.
+        let lua_directives: Vec<usize> = diagnostics
+            .iter()
+            .filter_map(|diagnostic| match &diagnostic.kind {
+                DiagnosticKind::UnknownDirective(name)
+                    if name.split_ascii_whitespace().next() == Some("lua") =>
+                {
+                    Some(diagnostic.span.start)
+                }
+                _ => None,
+            })
+            .collect();
+        for start in lua_directives {
+            if unit.text.get(start) == Some(&b'#') {
+                unit.text[start] = b'%';
+            }
+        }
+        diagnostics.retain(|diagnostic| {
+            !matches!(
+                &diagnostic.kind,
+                DiagnosticKind::UnknownDirective(name)
+                    if name.split_ascii_whitespace().next() == Some("lua")
+            )
+        });
+
         Ok(Self {
             sprite_name,
             translation_unit: unit,

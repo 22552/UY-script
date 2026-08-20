@@ -6,6 +6,7 @@ pub mod codegen;
 pub mod config;
 pub mod diagnostic;
 pub mod lexer;
+pub mod lua_macro;
 pub mod misc;
 pub mod parser;
 pub mod pre_processor;

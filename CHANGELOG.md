@@ -2,6 +2,15 @@
 
 ## UY-script
 
+### 20th August 2026: compile-time Lua procedural macros
+
+- Added `%lua { ... }` blocks executed at compile time by the native CLI.
+- Added `uy.emit(source)` for generating UY-script code from Lua.
+- Generated source re-enters the normal lexer, token macro, parser, static type, ownership, and borrow-checking pipeline.
+- Added a restricted Lua environment with host filesystem/process libraries removed.
+- Added instruction and generated-source size limits for compile-time macros.
+- Kept the `wasm32-unknown-unknown` build working by reporting Lua macros as unavailable there.
+
 ### 20th August 2026: borrow checking and reference syntax
 
 - Added temporary `&T` and `&mut T` procedure/function parameters.
