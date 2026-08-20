@@ -140,6 +140,11 @@ pub fn build_impl<T: Write + Seek>(
             &mut sprites_diagnostics,
         );
     }
+    visitor::uy_type_check::visit_project(
+        &mut project,
+        &mut stage_diagnostics,
+        &mut sprites_diagnostics,
+    );
     visitor::pass1::visit_project(&mut project);
     visitor::pass2::visit_project(
         &mut project,
