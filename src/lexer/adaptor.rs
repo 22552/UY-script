@@ -28,6 +28,8 @@ pub struct Lexer<'source> {
     token_stream: SpannedIter<'source, Token>,
     buffered: VecDeque<RawToken>,
     previous_can_end_expr: bool,
+    previous_is_call_head: bool,
+    at_stmt_start: bool,
     decl_mode: DeclMode,
 }
 
@@ -37,6 +39,8 @@ impl<'source> Lexer<'source> {
             token_stream: Token::lexer(source).spanned(),
             buffered: VecDeque::new(),
             previous_can_end_expr: false,
+            previous_is_call_head: false,
+            at_stmt_start: true,
             decl_mode: DeclMode::Normal,
         }
     }
@@ -112,7 +116,7 @@ impl<'source> Lexer<'source> {
     }
 
     fn try_borrow_expr(&mut self, amp_span: &Span) -> Option<(Token, Span)> {
-        if self.previous_can_end_expr {
+        if self.previous_can_end_expr && !self.previous_is_call_head {
             return None;
         }
 
@@ -187,8 +191,18 @@ impl<'source> Lexer<'source> {
     }
 
     fn finish(&mut self, token: Token, span: Span) -> (usize, Token, usize) {
+        let was_stmt_start = self.at_stmt_start;
+        self.previous_is_call_head = was_stmt_start
+            && matches!(self.decl_mode, DeclMode::Normal)
+            && matches!(token, Token::Name(_));
+
         self.update_decl_mode(&token);
         self.previous_can_end_expr = Self::token_can_end_expr(&token);
+        self.at_stmt_start = match token {
+            Token::Semicolon | Token::LBrace | Token::RBrace => true,
+            Token::Newline => self.at_stmt_start,
+            _ => false,
+        };
         (span.start, token, span.end)
     }
 }
@@ -208,6 +222,7 @@ impl Iterator for Lexer<'_> {
             Ok(token) => token,
             Err(_) => {
                 self.previous_can_end_expr = false;
+                self.previous_is_call_head = false;
                 return Some(Err(Diagnostic {
                     kind: DiagnosticKind::InvalidToken,
                     span,
