@@ -112,7 +112,7 @@ fn find_next_lua_directive(bytes: &[u8], mut i: usize) -> Option<usize> {
             && bytes[i..].starts_with(DIRECTIVE)
             && bytes
                 .get(i + DIRECTIVE.len())
-                .is_some_and(|byte| byte.is_ascii_whitespace() || *byte == b'{')
+                .is_some_and(|byte| (*byte).is_ascii_whitespace() || *byte == b'{')
         {
             return Some(i);
         }
@@ -124,7 +124,10 @@ fn find_next_lua_directive(bytes: &[u8], mut i: usize) -> Option<usize> {
 fn parse_block(bytes: &[u8], start: usize) -> Result<LuaBlock, Diagnostic> {
     let mut i = start + DIRECTIVE.len();
 
-    while bytes.get(i).is_some_and(|byte| matches!(byte, b' ' | b'\t' | b'\r')) {
+    while bytes
+        .get(i)
+        .is_some_and(|byte| matches!(*byte, b' ' | b'\t' | b'\r'))
+    {
         i += 1;
     }
 
