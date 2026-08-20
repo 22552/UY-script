@@ -140,11 +140,17 @@ pub fn build_impl<T: Write + Seek>(
             &mut sprites_diagnostics,
         );
     }
+    visitor::uy_borrow_check::check_project(
+        &project,
+        &mut stage_diagnostics,
+        &mut sprites_diagnostics,
+    );
     visitor::uy_type_check::visit_project(
         &mut project,
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
     );
+    visitor::uy_borrow_check::erase_project(&mut project);
     visitor::pass1::visit_project(&mut project);
     visitor::pass2::visit_project(
         &mut project,
