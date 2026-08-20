@@ -1,5 +1,5 @@
 {
-  description = "goboscript is the Scratch compiler";
+  description = "UY-script: a goboscript fork with static types, ownership, and borrow checking";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -15,6 +15,7 @@
     };
     rust = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
   in rec {
+    # The output remains `goboscript` while UY-script keeps the upstream binary name.
     packages.goboscript = pkgs.callPackage ./default.nix {
       inherit (pkgs) pkg-config openssl;
       inherit rust;

@@ -27,9 +27,11 @@ proc consume String text {
     say $text;
 }
 
-show_message &message; # shared borrow for this call
-consume message;       # moves the String
-# say message;         # compile-time error: message was moved
+onflag {
+    show_message &message; # shared borrow for this call
+    consume message;       # moves the String
+    # say message;         # compile-time error: message was moved
+}
 ```
 
 Mutable reference parameters use `&mut T` and calls use `&mut value`:
@@ -39,7 +41,9 @@ proc exclusive &mut String text {
     say $text;
 }
 
-exclusive &mut message;
+onflag {
+    exclusive &mut message;
+}
 ```
 
 The borrow checker currently treats a borrow as temporary for the duration of the call. Multiple shared borrows are allowed, while a mutable borrow conflicts with any other borrow of the same value in that call.
