@@ -1,18 +1,12 @@
 # Functions
 
-Functions are reusable procedures (custom blocks) that can return values, including 
-primitives or structs. Functions always run in **Run without screen refresh** mode and 
-**must only be called** from other **Run without screen refresh** procedures or 
-functions to prevent undefined behavior.
+Functions are reusable procedures (custom blocks) that can return values, including primitives or structs. Functions always run in **Run without screen refresh** mode and **must only be called** from other **Run without screen refresh** procedures or functions to prevent undefined behavior.
 
-Each function must **end with a `return` statement**. Using `stop_this_script` inside 
-a function is undefined behavior.
-
+Each function must **end with a `return` statement**. Using `stop_this_script` inside a function is undefined behavior.
 
 ## Declaring a Function
 
-Use the `func` keyword to define a function. Optionally, include a return type for 
-functions that return a struct.
+Use the `func` keyword to define a function.
 
 ```goboscript
 func my_function(x, y) {
@@ -20,19 +14,58 @@ func my_function(x, y) {
 }
 ```
 
+Struct return types can be specified after the parameter list:
+
 ```goboscript
 func my_function(x, y) MyStruct {
     return MyStruct { ... };
 }
 ```
 
----
+## Static Primitive Types (UY-script)
+
+UY-script allows primitive types in parameter and return positions:
+
+```goboscript
+func add(Int x, Int y) Int {
+    return $x + $y;
+}
+
+func label(String value) String {
+    return $value;
+}
+```
+
+Calls and return expressions are checked at compile time. `Int` is accepted when a `Number` is expected.
+
+`String` and struct arguments passed by value are ownership-checked. Returning an owned variable by value also moves it.
+
+## Reference Parameters (UY-script)
+
+Functions can borrow arguments using the same `&T` and `&mut T` syntax as procedures:
+
+```goboscript
+func text_length(&String text) Int {
+    return length $text;
+}
+```
+
+Call a reference parameter with a borrow expression:
+
+```goboscript
+length = text_length(&message);
+```
+
+A mutable parameter requires `&mut value`. Borrow conflicts are checked for the duration of each call.
+
+!!! warning
+    UY references are currently compile-time metadata. They are erased before the Scratch backend and do not create runtime pointers or aliases.
+
+See [Types, ownership, and borrowing](types-and-ownership.md).
 
 ## Returning Struct Variables
 
 Functions can return struct variables by specifying the struct type as the return type.
-
-### Basic Struct Return Example
 
 ```goboscript
 struct Vector {
@@ -48,25 +81,19 @@ func vec_add(Vector lhs, Vector rhs) Vector {
 }
 ```
 
-### Using the Returned Struct
+Using the returned struct:
 
 ```goboscript
-# Create vectors
 Vector vec1 = Vector { x: 10, y: 20 };
 Vector vec2 = Vector { x: 5, y: 15 };
-
-# Call function that returns a struct
 Vector result = vec_add(vec1, vec2);
 
-# Access the returned struct's fields
-say result.x; # Outputs: 15
-say result.y; # Outputs: 35
+say result.x;
+say result.y;
 ```
 
-!!!NOTE
-    When returning struct variables from functions, the return type must be explicitly
-    specified when returning a struct
----
+!!! note
+    When returning struct variables from functions, the return type must be explicitly specified.
 
 ## Default Argument Values
 
@@ -78,10 +105,8 @@ func greet(name = "world") {
 }
 ```
 
-* `greet()` returns `"Hello, world!"`
-* `greet("aspizu")` returns `"Hello, aspizu!"`
-
----
+- `greet()` returns `"Hello, world!"`
+- `greet("aspizu")` returns `"Hello, aspizu!"`
 
 ## Calling a Function
 
@@ -91,20 +116,15 @@ Functions are called by name with argument values:
 say my_function(1, 2);
 ```
 
----
-
 ## Keyword Arguments
 
-You can also call functions using **keyword arguments**, which specify parameter names
- explicitly. This is useful when using default arguments or calling functions with many 
- parameters:
+Functions can be called using keyword arguments:
 
 ```goboscript
 greet(name: "aspizu")
 ```
 
-This behaves the same as `greet("aspizu")`, but makes the call more readable—especially 
-when multiple parameters are involved:
+This is especially useful with defaults or many parameters:
 
 ```goboscript
 func introduce(name, title = "developer", location = "unknown") {
@@ -112,18 +132,8 @@ func introduce(name, title = "developer", location = "unknown") {
 }
 ```
 
-Call it with keyword arguments:
-
 ```goboscript
 introduce(name: "aspizu", location: "India")
-# Equivalent to: introduce("aspizu", "developer", "India")
 ```
 
-!!!NOTE 
-    Keyword arguments can be used in any order, as long as the required parameters
-    are provided:
-
-    ```goboscript
-    introduce(location: "Berlin", name: "Kai");
-    # Still valid
-    ```
+Keyword arguments can be used in any order as long as required parameters are provided.

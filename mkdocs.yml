@@ -1,4 +1,4 @@
-site_name: goboscript docs
+site_name: UY-script docs
 nav:
   - Install: install.md
   - Getting Started:
@@ -7,6 +7,7 @@ nav:
   - Configuration: configuration.md
   - Language:
       - Syntax: language/syntax.md
+      - Types, Ownership & Borrowing: language/types-and-ownership.md
       - Sprites: language/sprites.md
       - Costumes: language/costumes.md
       - Sounds: language/sounds.md
@@ -72,8 +73,6 @@ theme:
     edit: material/file-edit
     view: material/language-markdown
   palette:
-    # Note: Using the system theme works with the insiders version
-    # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
     - media: "(prefers-color-scheme)"
       toggle:
         icon: material/brightness-auto
@@ -90,11 +89,10 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
-repo_url: https://github.com/aspizu/goboscript
+repo_url: https://github.com/22552/UY-script
 edit_uri: edit/main/docs/
-repo_name: goboscript
-site_author: Priyanshu Dangare
-site_url: https://aspiz.uk/goboscript/docs/
+repo_name: UY-script
+site_author: "22552"
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -117,17 +115,15 @@ markdown_extensions:
 plugins:
   - search
   - git-committers:
-      repository: aspizu/goboscript
+      repository: 22552/UY-script
       branch: main
 extra_css:
   - stylesheets/extra.css
 extra_javascript:
   - javascripts/main.js
 extra:
-  homepage: https://github.com/aspizu/goboscript
+  homepage: https://github.com/22552/UY-script
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/aspizu
-    - icon: fontawesome/brands/discord
-      link: https://discord.gg/mKQqsJ6UtK
+      link: https://github.com/22552
 use_directory_urls: false

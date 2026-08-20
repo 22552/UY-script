@@ -14,8 +14,8 @@ fn main() -> ExitCode {
     std::panic::set_hook(Box::new(|info| {
         eprintln!(
             "{info}\n{}\nopen an issue at {}",
-            "goboscript is cooked 💀".red().bold(),
-            "https://github.com/aspizu/goboscript/issues".cyan()
+            "UY-script is cooked 💀".red().bold(),
+            "https://github.com/22552/UY-script/issues".cyan()
         );
     }));
     let begin = Instant::now();

@@ -1,98 +1,117 @@
-<h1 align="center">
-  <img src="docs/assets/goboscript.svg">
-  goboscript
-</h1>
+# UY-script
 
-<p align="center">
-  <strong><a href="https://aspiz.uk/goboscript/ide">Launch IDE</a></strong>&nbsp;&nbsp;•&nbsp;
-  <strong><a href="https://aspiz.uk/goboscript/docs">Documentation</a></strong>&nbsp;&nbsp;•&nbsp;
-  <strong><a href="https://github.com/goboscript/std">Standard Library</a></strong>&nbsp;&nbsp;•&nbsp;
-  <strong><a href="https://github.com/aspizu/backpack">Package Manager</a></strong>&nbsp;&nbsp;•&nbsp;
-  <strong><a href="https://github.com/aspizu/sb2gs">Decompiler</a></strong>&nbsp;&nbsp;•&nbsp;
-  <strong><a href="https://github.com/aspizu/goboscript-mcp">MCP Server</a></strong>
-</p>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/og-image-dark.webp" />
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/og-image-light.webp" />
-  <img alt="goboscript screenshot" src="docs/assets/og-image-light.webp" />
-</picture>
+**UY-script** is an experimental fork of [goboscript](https://github.com/aspizu/goboscript) that keeps the goboscript → Scratch compiler pipeline while adding a stricter compile-time language layer.
 
-![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1462182798210109505?style=flat&logo=discord&label=Discord)](https://discord.gg/mKQqsJ6UtK) ![GitHub License](https://img.shields.io/github/license/aspizu/goboscript)
+The current UY layer adds:
 
-goboscript is a text-based programming language that compiles to Scratch. Write
-Scratch projects in text, and compile it into a `.sb3` file -- which can be opened
-in the Scratch editor, TurboWarp or be uploaded to the Scratch website.
+- primitive static types: `Number`, `Int`, `String`, and `Bool`;
+- compile-time type checking for variables, lists, procedure/function arguments, and function returns;
+- ownership-style move checking for `String` and struct values;
+- temporary shared and mutable borrow syntax with `&T` and `&mut T` parameters;
+- move/borrow conflict diagnostics before Scratch code generation;
+- type/reference metadata erasure so the existing goboscript Scratch backend stays compatible.
 
-goboscript makes developing advanced Scratch projects FAST. goboscript syntax is
-concise and easy to read. Use a version-control system such as git. Use VS Code
-or your favourite text-editor. Share code by copy-pasting. Use the standard library.
-Refactor code using search and replace. Write scripts in other programming languages
-to generate goboscript code. goboscript allows you to integrate external tooling and
-workflows, such as using a script to generate costumes for a text rendering engine,
-or loading in images into lists. goboscript has a powerful macro system similar to C.
-The standard library includes many macros for frequently used patterns, such as
-converting R, G, B values into a single integer. goboscript performs optimization,
-removes unused code, and detects problems & mistakes.
+> UY-script is experimental. The static analysis is intentionally stricter than normal goboscript, but references are currently a **compile-time checking feature**, not runtime pointers or aliases in Scratch.
 
-goboscript is more than just an 1:1 mapping of Scratch blocks to text, it has
-abstractions such as:
+## Example
 
-- Custom data-types using Structs and Enums.
-- Functions that return values
-- Default parameters for Functions & Procedures
-- Operators such as: `!=`, `>=`, `<=`, `//` (Floor division), `not in`
-- Local variables (Function-scoped)
-- and more...
+```goboscript
+var Int score = 0;
+var String message = "hello";
 
-All these abstractions are compiled down to regular Scratch code.
+proc show_message &String text {
+    say $text;
+}
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cheatsheet-dark.png" />
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/cheatsheet-light.png" />
-  <img alt="goboscript overview & reference" src="docs/assets/cheatsheet-light.png" />
-</picture>
+proc consume String text {
+    say $text;
+}
 
-[**Scratch Forum topic**](https://scratch.mit.edu/discuss/topic/747370/)&nbsp;&nbsp;•&nbsp;&nbsp;[**Made With goboscript Studio**](https://scratch.mit.edu/studios/51262907/)&nbsp;&nbsp;•&nbsp;&nbsp;[**Hacker News Discussion (Reached Frontpage)**](https://news.ycombinator.com/item?id=44026799)
+show_message &message; # shared borrow for this call
+consume message;       # moves the String
+# say message;         # compile-time error: message was moved
+```
 
-## Sister Projects
+Mutable reference parameters use `&mut T` and calls use `&mut value`:
 
-- [std](https://github.com/goboscript/std): The goboscript standard library.
-- [backpack](https://github.com/aspizu/backpack): Package manager for goboscript.
-- [sb2gs](https://github.com/aspizu/sb2gs): Decompile Scratch projects (.sb3) into goboscript projects (.gs)
-- [IDE](https://github.com/aspizu/goboscript-ide): Online IDE for goboscript, runs projects instantly in the browser.
-- [MCP Server](https://github.com/aspizu/goboscript-mcp): Connects AI coding agents to the compiler and Turbowarp Desktop.
+```goboscript
+proc exclusive &mut String text {
+    say $text;
+}
 
-## Prior Art
+exclusive &mut message;
+```
 
-For a complete list of all text-based scratch projects, see <https://scratch.mit.edu/discuss/topic/792714/>
+The borrow checker currently treats a borrow as temporary for the duration of the call. Multiple shared borrows are allowed, while a mutable borrow conflicts with any other borrow of the same value in that call.
 
-**@retr0id** first presented the demoscene discord with his
-[**boiga**](https://github.com/DavidBuchanan314/boiga) project. boiga works by
-exporting Python data structures which nicely represent Scratch code in the form of
-Python code. Soon after, I created my own re-implementation of boiga called Gobomatic.
+## Types and ownership
+
+| Type | Notes | Ownership checked? |
+| --- | --- | --- |
+| `Int` | integer values | No |
+| `Number` | numeric values; accepts `Int` | No |
+| `Bool` / `Boolean` | boolean values | No |
+| `String` | text values | **Yes** |
+| structs | user-defined goboscript structs | **Yes** |
+| `Any` / `Value` / untyped | dynamic compatibility mode | No |
+
+An owned `String` or struct is moved when it is consumed by another owned destination, passed to an owned parameter, inserted into an owned list, or returned by value. Reassigning the moved variable creates a fresh value and makes it usable again.
+
+See **[Types, ownership, and borrowing](docs/language/types-and-ownership.md)** for the current rules and limitations.
+
+## Installation
+
+UY-script currently keeps the `goboscript` Cargo package/binary name for compatibility with the upstream toolchain.
+
+```bash
+git clone https://github.com/22552/UY-script.git
+cd UY-script
+cargo +nightly install --path .
+```
+
+Then use the normal goboscript CLI:
+
+```bash
+goboscript --help
+```
+
+See [docs/install.md](docs/install.md) for source and Nix installation instructions.
+
+## Documentation
+
+- [Install](docs/install.md)
+- [Getting started](docs/getting-started/index.md)
+- [Types, ownership, and borrowing](docs/language/types-and-ownership.md)
+- [Variables](docs/language/variables.md)
+- [Lists](docs/language/lists.md)
+- [Custom blocks](docs/language/custom-blocks.md)
+- [Functions](docs/language/functions.md)
+- [Changelog](CHANGELOG.md)
+
+Most of the language and Scratch backend are inherited from goboscript, so the existing goboscript documentation remains relevant unless a UY-specific page says otherwise.
+
+## Current scope
+
+UY-script is currently focused on compile-time safety while preserving the existing Scratch output model. In particular:
+
+- reference annotations are erased before the Scratch backend runs;
+- references cannot currently be stored or returned as first-class values;
+- `&mut` expresses exclusive compile-time access but does not create pointer-style mutation semantics in Scratch;
+- untyped goboscript remains supported through the dynamic `Value`/`Any` behavior;
+- the JavaScript transpilation/backend idea is not implemented yet.
+
+## Upstream and attribution
+
+UY-script is based on [aspizu/goboscript](https://github.com/aspizu/goboscript) and retains its MIT license and existing attribution. This fork adds experimental UY-specific static analysis on top of that codebase.
+
+For upstream goboscript resources, see:
+
+- [goboscript repository](https://github.com/aspizu/goboscript)
+- [goboscript documentation](https://aspiz.uk/goboscript/docs/)
+- [goboscript standard library](https://github.com/goboscript/std)
 
 ## Contributing
 
-See the [**Contributing Guide**](https://aspiz.uk/goboscript/docs/contributing.html) for
-instructions on setting up the development environment and submitting Pull Requests.
+Issues and changes specific to this fork should go to the [UY-script repository](https://github.com/22552/UY-script/issues).
 
-See [**CHANGELOG**](./CHANGELOG.md) for a list of changes.
-
-## FOSS HACK 25
-
-goboscript was one of the
-[first-place winners](https://forum.fossunited.org/t/foss-hack-2025-results/5541) of
-FOSS HACK 25, and was awarded a ₹50,000 prize. FOSS HACK 25 was a open-source
-hackathon conducted on 22nd - 23rd February 2025 by the FOSS United Foundation.
-During the 48-hour hackathon, I had worked on several goboscript issues and feature
-implementation. Thank you FOSS United for the platform and opportunity.
-
-## Star History
-
-<a href="https://star-history.dera.page/#aspizu/goboscript&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=aspizu/goboscript&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=aspizu/goboscript&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=aspizu/goboscript&type=date&legend=top-left" />
- </picture>
-</a>
+When changing UY's type or ownership rules, please update `docs/language/types-and-ownership.md` and add regression tests for both accepted and rejected programs.

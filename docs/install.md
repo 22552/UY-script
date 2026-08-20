@@ -1,77 +1,86 @@
 # Install
 
+UY-script is currently built from source and keeps the upstream `goboscript` package/binary name for compatibility.
+
 !!! tip
-    goboscript requires the **nightly** Rust toolchain. Install it once with:
+    UY-script currently requires the **nightly** Rust toolchain. Install it once with:
+
     ```bash
     rustup toolchain install nightly
     ```
 
 ## Install from source
 
-Clones and installs the latest version from the git repository. Requires `git` and the
-[Rust toolchain](https://rustup.rs/).
+Requires `git` and the [Rust toolchain](https://rustup.rs/).
 
 ```bash
-git clone https://github.com/aspizu/goboscript
-cd goboscript
+git clone https://github.com/22552/UY-script.git
+cd UY-script
 cargo +nightly install --path .
+```
+
+The installed command is currently:
+
+```bash
+goboscript --help
 ```
 
 To update:
 
 ```bash
-cd goboscript
+cd UY-script
 git pull
-cargo +nightly install --path .
+cargo +nightly install --path . --force
 ```
 
-## Install from source (using cargo)
-
-Installs the latest version from the git repository in a single command.
+## Install directly with Cargo
 
 ```bash
-cargo +nightly install --git https://github.com/aspizu/goboscript
+cargo +nightly install --git https://github.com/22552/UY-script.git
 ```
 
 To update:
 
 ```bash
-cargo +nightly install --git https://github.com/aspizu/goboscript --force
+cargo +nightly install --git https://github.com/22552/UY-script.git --force
 ```
 
-## Install with nix
+## Development checkout
 
-!!! note
+For compiler development, cloning the repository and running directly is usually easier:
 
-    The nix flake installs goboscript from source, like the other methods, so you will need to be patient.
+```bash
+git clone https://github.com/22552/UY-script.git
+cd UY-script
+cargo +nightly test
+cargo +nightly run -- --help
+```
 
-### devShell
+UY-script adds its static type/ownership/borrow passes before the inherited goboscript Scratch backend, so running the normal test suite is useful when changing either layer.
 
-You can test goboscript without installing it to your system with the nix devshell, a bit like `nix-shell -p {some package}`.
-This will create a subshell where `goboscript` is installed.
-Once you exit this subshell, you will no longer be able to use the `goboscript` command
-(until you open a new devShell or install it system-wide).
-Once you run `nix-collect-garbage`, the `goboscript` installation files will actually be removed from your system.
+## Install with Nix
 
-Simply run the command `nix develop github:aspizu/goboscript`
+The repository retains the upstream Nix setup. You can enter its development shell directly from this fork:
 
-### Nixos standalone installation (flake)
+```bash
+nix develop github:22552/UY-script
+```
 
-This is for if you want to have `goboscript` available system-wide.
-For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake, roughly like so:
+For a NixOS flake input:
 
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=25.11";
-    goboscript.url = "github:aspizu/goboscript";
+    uy-script.url = "github:22552/UY-script";
   };
-  outputs = { self, nixpkgs, goboscript, ... }: {
+
+  outputs = { self, nixpkgs, uy-script, ... }: {
     nixosConfigurations.yourHostname = nixpkgs.lib.nixosSystem {
       modules = [
         ({ pkgs, ... }: {
           environment.systemPackages = [
-            goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript
+            uy-script.packages.${pkgs.stdenv.hostPlatform.system}.goboscript
           ];
         })
       ];
@@ -80,3 +89,4 @@ For nix flakes, add the input `goboscript` and add it to `environment.systemPack
 }
 ```
 
+The package output is still named `goboscript` for compatibility.

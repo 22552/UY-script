@@ -1,13 +1,29 @@
 # Lists
 
-The same rules apply for lists as for variables regarding **for all sprites** and
-**for this sprite only**.
+The same rules apply for lists as for variables regarding **for all sprites** and **for this sprite only**.
 
 ## Declaration
 
 ```goboscript
 list list_name; # initialized to empty list.
 ```
+
+### Typed lists in UY-script
+
+UY primitive types can be used as list element types:
+
+```goboscript
+list Int scores = [1, 2, 3];
+list Number samples = [1, 2.5, 3];
+list String names = ["Ada", "Grace"];
+list Bool flags = [true, false];
+```
+
+Inserted, replaced, and default values are checked against the list element type. `Int` values are accepted by a `Number` list.
+
+`String` and struct list elements are owned values in the current UY checker. Adding or inserting a simple owned variable into an owned list can move that variable.
+
+See [Types, ownership, and borrowing](types-and-ownership.md).
 
 ### With default values
 
@@ -48,7 +64,7 @@ list list_name "filepath.txt";
 list type_name list_name "filepath.txt";
 ```
 
-If type is specified, each list item is made-up by N lines where N is the no. of fields in type.
+If type is specified, each list item is made up by N lines where N is the number of fields in the type.
 
 ## Operations
 
@@ -130,14 +146,14 @@ value = list_name["last"];
 
 ## Compound Assignment
 
-| Operator               | Implementation                                 |
-|------------------------|------------------------------------------------|
-| `list_name[index]++;`  | ![](../assets/list_increment.png){width="400"} |
-| `list_name[index]--;`  | ![](../assets/list_decrement.png){width="400"} |
-| `list_name[index] += y;` | ![](../assets/list_add.png){width="400"} |
-| `list_name[index] -= y;` | ![](../assets/list_subtract.png){width="400"} |
-| `list_name[index] *= y;` | ![](../assets/list_multiply.png){width="400"} |
-| `list_name[index] /= y;` | ![](../assets/list_divide.png){width="400"} |
-| `list_name[index] //= y;` | ![](../assets/list_floor_divide.png){width="400"} |
-| `list_name[index] %= y;` | ![](../assets/list_mod.png){width="400"} |
-| `list_name[index] &= y;` | ![](../assets/list_join.png){width="400"} |
+| Operator                 | Implementation                                      |
+|--------------------------|-----------------------------------------------------|
+| `list_name[index]++;`    | ![](../assets/list_increment.png){width="400"}       |
+| `list_name[index]--;`    | ![](../assets/list_decrement.png){width="400"}       |
+| `list_name[index] += y;` | ![](../assets/list_add.png){width="400"}             |
+| `list_name[index] -= y;` | ![](../assets/list_subtract.png){width="400"}        |
+| `list_name[index] *= y;` | ![](../assets/list_multiply.png){width="400"}        |
+| `list_name[index] /= y;` | ![](../assets/list_divide.png){width="400"}          |
+| `list_name[index] //= y;`| ![](../assets/list_floor_divide.png){width="400"}    |
+| `list_name[index] %= y;` | ![](../assets/list_mod.png){width="400"}             |
+| `list_name[index] &= y;` | ![](../assets/list_join.png){width="400"}            |

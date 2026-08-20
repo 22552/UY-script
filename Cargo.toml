@@ -2,13 +2,14 @@
 name = "goboscript"
 version = "3.3.0"
 edition = "2021"
-description = "goboscript is the Scratch compiler."
+description = "UY-script: an experimental goboscript fork with static types, ownership, and borrow checking for Scratch projects."
 license = "MIT"
 authors = ["Priyanshu Dangare <aspizu@protonmail.com>"]
-homepage = "https://aspiz.uk/goboscript"
-repository = "https://github.com/aspizu/goboscript"
-documentation = "https://aspiz.uk/goboscript/docs"
+homepage = "https://github.com/22552/UY-script"
+repository = "https://github.com/22552/UY-script"
+documentation = "https://github.com/22552/UY-script/tree/main/docs"
 categories = ["compilers"]
+keywords = ["scratch", "compiler", "static-types", "ownership"]
 
 [dependencies]
 annotate-snippets = "0.11.4"
@@ -59,6 +60,7 @@ lalrpop = "0.22.0"
 name = "libgoboscript"
 crate-type = ["cdylib", "rlib"]
 
+# Keep the upstream package/lib names for compatibility while UY-script is experimental.
 # <https://github.com/rustwasm/wasm-pack/issues/1441>
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
