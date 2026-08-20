@@ -61,7 +61,7 @@ impl<'source> Lexer<'source> {
         }
 
         let first = self.raw_next()?;
-        match &first.0 {
+        match first.0.clone() {
             Ok(Token::Name(name)) if name == "mut" => {
                 let Some(second) = self.raw_next() else {
                     self.push_front(first);
@@ -72,7 +72,7 @@ impl<'source> Lexer<'source> {
                     self.push_front(first);
                     return None;
                 };
-                match (&second.0, &third.0) {
+                match (second.0.clone(), third.0.clone()) {
                     (Ok(Token::Name(type_name)), Ok(Token::Name(arg_name))) => {
                         let encoded = format!("@uyref:1:{type_name}:{arg_name}").into();
                         self.push_front((Ok(Token::Name(encoded)), third.1.clone()));
@@ -91,7 +91,7 @@ impl<'source> Lexer<'source> {
                     self.push_front(first);
                     return None;
                 };
-                match &second.0 {
+                match second.0.clone() {
                     Ok(Token::Name(arg_name)) => {
                         let encoded = format!("@uyref:0:{type_name}:{arg_name}").into();
                         self.push_front((Ok(Token::Name(encoded)), second.1.clone()));
@@ -117,13 +117,13 @@ impl<'source> Lexer<'source> {
         }
 
         let first = self.raw_next()?;
-        match &first.0 {
+        match first.0.clone() {
             Ok(Token::Name(name)) if name == "mut" => {
                 let Some(second) = self.raw_next() else {
                     self.push_front(first);
                     return None;
                 };
-                match &second.0 {
+                match second.0.clone() {
                     Ok(Token::Name(name)) => Some((
                         Token::Name(format!("@uyborrow:1:{name}").into()),
                         amp_span.start..second.1.end,
